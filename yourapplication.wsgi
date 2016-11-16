@@ -1,7 +1,9 @@
 # make sure our folder is in the path
 import sys
-sys.path.insert(0, '/www/python.karldenby.com/python')
-sys.path.insert(1, '/www/python.karldenby.com/python/bootstrap')
 
-# import our program
+# Customize this
+my_app_folder = '/var/www/mywebsite/python'
+
+# Import our program
+sys.path.insert(0, my_app_folder)
 from myapp import app as application
