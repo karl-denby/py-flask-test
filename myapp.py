@@ -2,6 +2,7 @@ from sys import version
 from flask import Flask, redirect, request, render_template
 from flask_bootstrap import Bootstrap
 app = Flask(__name__)
+bootstrap = Bootstrap(app)
 
 @app.route('/')
 def hello_world():
@@ -22,5 +23,4 @@ def user(name):
 
 # Run the application
 if __name__ == '__main__':
-    bootstrap = Bootstrap(app)
     app.run(debug=True, host='0.0.0.0')
