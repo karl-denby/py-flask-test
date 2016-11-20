@@ -1,5 +1,5 @@
 from sys import version
-from flask import Flask, redirect, request, render_template
+from flask import Flask, redirect, request, render_template, session, flash
 from flask_bootstrap import Bootstrap
 from flask_moment import Moment
 from datetime import datetime
@@ -34,13 +34,15 @@ def headers():
 def user(name=None):
     test_form = NameForm()
     if test_form.validate_on_submit():
-        name = test_form.name.data
-        test_form.name.data = ''
-        
+        old_name = session.get('name')
+        if old_name != test_form.name.data:
+            flash("You've changed your name")
+            session['name'] = test_form.name.data
+
     if name == None:
         name = "Anonymous"
-        
-    return render_template('user.html', name=name, form=test_form)
+
+    return render_template('user.html', name=session.get('name'), form=test_form)
 
 
 #
