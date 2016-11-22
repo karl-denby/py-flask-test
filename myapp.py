@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 import sqlite3
 
-from flask import Flask, redirect, request, render_template, session, flash, g
+from flask import Flask, redirect, request, render_template, session, flash, g, url_for
 from flask_bootstrap import Bootstrap
 from flask_moment import Moment
 from flask_wtf import FlaskForm
@@ -38,7 +38,7 @@ class Role(db.Model):
     __tablename__ = 'roles'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), unique=True)
-    user = db.relationship('User', backref='role')
+    user = db.relationship('User', backref='role', lazy='dynamic')
 
     def __repr__(self):
         return '<Role %r>' % self.name
@@ -72,18 +72,26 @@ def headers():
 @app.route('/user/', methods=['GET', 'POST'])
 @app.route('/user/<name>', methods=['GET', 'POST'])
 def user(name=None):
-    test_form = NameForm()
-    if test_form.validate_on_submit():
-        old_name = session.get('name')
-        if old_name != test_form.name.data:
-            flash("You've changed your name")
-            session['name'] = test_form.name.data
+    form = NameForm()
+    if form.validate_on_submit():
+        db_user = User.query.filter_by(username=form.name.data).first()
+        if db_user is None:
+            db_user = User(username=form.name.data)
+            db.session.add(db_user)
+            session['known'] = False
+        else:
+            session['known'] = True
 
-    if session.get('name') == None:
-        who = 'Anonymous'
-    else:
-        who = session['name']
-    return render_template('user.html', name=who, form=test_form)
+        session['name'] = form.name.data
+        form.name.data = ''
+        return redirect(url_for('user'))
+
+    return render_template(
+        'user.html',
+        form=form,
+        name=session.get('name'),
+        known=session.get('known', False)
+    )
 
 
 #
