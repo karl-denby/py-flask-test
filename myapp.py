@@ -2,14 +2,29 @@
 # Imports
 #
 from sys import version
+import os
+from datetime import datetime
+import sqlite3
+
 from flask import Flask, redirect, request, render_template, session, flash, g
 from flask_bootstrap import Bootstrap
 from flask_moment import Moment
-from datetime import datetime
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.validators import Required
-import sqlite3
+from flask_sqlalchemy import SQLAlchemy
+
+
+basedir = os.path.abspath(os.path.dirname(__file__))
+app = Flask(__name__)
+
+bootstrap = Bootstrap(app)
+moment = Moment(app)
+db = SQLAlchemy(app)
+
+app.config['SECRET_KEY'] = 'MySecretKeyForCSFR'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data.sqlite')
+app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 
 
 #
@@ -19,28 +34,24 @@ class NameForm(FlaskForm):
     name = StringField('What is your name?', validators=[Required()])
     submit = SubmitField('Submit')
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'MySecretKeyForCSFR'
-bootstrap = Bootstrap(app)
-moment = Moment(app)
+class Role(db.Model):
+    __tablename__ = 'roles'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), unique=True)
+    user = db.relationship('User', backref='role')
 
+    def __repr__(self):
+        return '<Role %r>' % self.name
 
-#
-# sqlite3 boilerplate from http://flask.pocoo.org/docs/0.11/patterns/sqlite3/
-#
-DATABASE = '/path/to/database.db'
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), unique=True, index=True)
+    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
 
-def get_db():
-    db = getattr(g, '_database', None)
-    if db is None:
-        db = g._database = sqlite3.connect(DATABASE)
-    return db
+    def __repr__(self):
+        return '<User %r>' % self.username
 
-@app.teardown_appcontext
-def close_connection(exception):
-    db = getattr(g, '_database', None)
-    if db is not None:
-        db.close()
 
 #
 # routes/controllers
