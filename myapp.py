@@ -7,24 +7,32 @@ from datetime import datetime
 import sqlite3
 
 from flask import Flask, redirect, request, render_template, session, flash, g, url_for
+from flask_script import Manager, Shell
 from flask_bootstrap import Bootstrap
 from flask_moment import Moment
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.validators import Required
 from flask_sqlalchemy import SQLAlchemy
-
+from flask_migrate import Migrate, MigrateCommand
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
+manager = Manager(app)
 
 bootstrap = Bootstrap(app)
 moment = Moment(app)
+
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+def make_shell_context():
+    return dict(app=app, db=db, User=User, Role=Role)
 
 app.config['SECRET_KEY'] = 'MySecretKeyForCSFR'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'data.sqlite')
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
+manager.add_command('db', MigrateCommand)
+manager.add_command('shell', Shell(make_context=make_shell_context))
 
 
 #
@@ -98,4 +106,5 @@ def user(name=None):
 # Run the application
 #
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    manager.run()
+    #app.run(debug=True, host='0.0.0.0')
