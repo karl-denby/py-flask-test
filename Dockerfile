@@ -12,6 +12,10 @@ RUN pip install -r requirements.txt
 
 COPY . /app
 
+RUN python manage.py db init; \
+    python manage.py db migrate -m "Initial"; \
+    python manage.py db upgrade;
+
 ENTRYPOINT [ "python" ]
 
 EXPOSE 5000
